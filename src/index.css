@@ -1,0 +1,159 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+  body {
+    @apply bg-slate-950 text-slate-100 antialiased;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+  }
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+@layer utilities {
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: rgba(71, 85, 105, 0.4);
+    border-radius: 3px;
+  }
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(71, 85, 105, 0.4) transparent;
+  }
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  /* Bottom padding that clears the fixed mobile bottom nav + iOS safe area.
+     Generous clearance ensures no button or content sits behind the floating nav.
+     Desktop overrides to a small fixed value since the nav becomes a sidebar. */
+  .pb-nav-safe {
+    padding-bottom: calc(8.5rem + env(safe-area-inset-bottom, 0px));
+  }
+  @media (min-width: 1024px) {
+    .pb-nav-safe {
+      padding-bottom: 2rem;
+    }
+  }
+  .animate-slide-up {
+    animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out forwards;
+  }
+  .animate-pulse-ring {
+    animation: pulseRing 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  @media (min-width: 1024px) {
+    .animate-slide-up {
+      animation: scaleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+  }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes pulseRing {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+}
+
+/* Print styles for towing notice — US Letter (8.5 x 11), 0.5in margins */
+@media print {
+  @page {
+    size: letter;
+    margin: 0.5in;
+  }
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+    color: #000 !important;
+  }
+  body * {
+    visibility: hidden;
+  }
+  .notice-document,
+  .notice-document * {
+    visibility: visible;
+  }
+  .notice-document {
+    position: static !important;
+    left: auto !important;
+    top: auto !important;
+    width: 100% !important;
+    min-height: 0 !important;
+    max-width: 7.5in !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+  }
+  /* Prevent any child from exceeding the printable width */
+  .notice-document table {
+    table-layout: fixed !important;
+    width: 100% !important;
+  }
+  .notice-document img {
+    max-width: 1.4in !important;
+    max-height: 1.4in !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+}
+
+/* Work order print styles — hide app, show only the print area */
+@media print {
+  .print-hide {
+    display: none !important;
+  }
+  body * {
+    visibility: hidden;
+  }
+  .print-area,
+  .print-area * {
+    visibility: visible;
+  }
+  .print-area {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0.75in !important;
+    background: #fff !important;
+    color: #000 !important;
+  }
+}

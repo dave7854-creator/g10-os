@@ -1,0 +1,1 @@
+ALTER TABLE ebay_config ADD COLUMN IF NOT EXISTS ebay_username text;

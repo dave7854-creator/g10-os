@@ -1,0 +1,87 @@
+{
+  "version": 1,
+  "project": "G10 OS",
+  "architecture": [
+    "G10 OS uses a React + TypeScript + Vite frontend.",
+    "Supabase is used for database and authentication services.",
+    "Supabase Edge Functions provide server-side functionality.",
+    "The internal G10 OS application and the public/customer-facing site are separate application surfaces.",
+    "Customer portal authentication has frontend, Supabase Auth, database-linking, and Edge Function components.",
+    "G10 Multi-Agent Builder is located in g10-builder and operates on the G10 OS repository."
+  ],
+  "knownIssues": [
+    {
+      "name": "Customer portal login",
+      "status": "unresolved",
+      "details": "Customer creation currently works, but customer portal login can return Invalid login credentials. Investigation identified multiple possible provisioning, callback, recovery-state, redirect, and authentication-flow issues. No root-cause fix has yet been safely applied."
+    }
+  ],
+  "resolvedIssues": [
+    {
+      "name": "Internal application browser title",
+      "details": "The internal G10 OS browser title was changed successfully to G10 OS and passed the Vite build."
+    }
+  ],
+  "importantFiles": [
+    {
+      "path": "g10-builder/builder.js",
+      "purpose": "G10 Multi-Agent Builder orchestration, investigation, modification, review, approval, backup, build, and rollback workflow."
+    },
+    {
+      "path": "g10-builder/g10-knowledge.json",
+      "purpose": "Persistent shared project knowledge. Normal Builder code-modification proposals must not modify this file."
+    },
+    {
+      "path": "src/public-site/portal/PortalLogin.tsx",
+      "purpose": "Customer portal login UI and authentication flow."
+    },
+    {
+      "path": "src/public-site/portal/PortalSetup.tsx",
+      "purpose": "Customer portal account/setup flow."
+    },
+    {
+      "path": "src/public-site/portal/PortalApp.tsx",
+      "purpose": "Customer portal application and authentication state handling."
+    },
+    {
+      "path": "src/public-site/portalApi.ts",
+      "purpose": "Customer portal API/client functionality."
+    },
+    {
+      "path": "src/screens/CustomerAccountsScreen.tsx",
+      "purpose": "Manager-facing customer account management."
+    },
+    {
+      "path": "src/shop/managerApi.ts",
+      "purpose": "Manager-side shop/customer API functionality."
+    },
+    {
+      "path": "src/supabaseClient.ts",
+      "purpose": "Frontend Supabase client configuration."
+    },
+    {
+      "path": "supabase/functions/customer-portal/index.ts",
+      "purpose": "Customer portal Supabase Edge Function including customer account provisioning and portal operations."
+    }
+  ],
+  "decisions": [
+    "G10 Builder uses dynamic agent selection instead of running every agent for every request.",
+    "Agents share findings through the Builder rather than operating as isolated workers.",
+    "Current repository source code is authoritative when it conflicts with stored project knowledge.",
+    "Important code changes require review before user approval.",
+    "Changes require a visible exact diff before approval.",
+    "Changes require explicit user approval before application.",
+    "Builder creates a backup before applying approved changes.",
+    "Builder runs a build after changes and rolls back when the build fails.",
+    "Secrets and .env values must never be sent to OpenAI model prompts.",
+    "Supabase service-role or secret credentials must remain local and server-side.",
+    "AI-generated arbitrary shell commands must not be executed automatically.",
+    "Persistent project knowledge must not be automatically written from unverified agent findings.",
+    "G10 Builder should favor targeted file retrieval to minimize API token usage."
+  ],
+  "agentFindings": []
+  {
+  "path": "supabase/migrations/20260916223155_20260916230000_add_portal_status_and_manager_functions.sql.sql",
+  "purpose": "Adds customer portal status, setup state, and manager-side portal account functions. Important when diagnosing customer authentication and portal provisioning."
+}
+}

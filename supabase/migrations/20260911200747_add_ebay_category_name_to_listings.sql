@@ -1,0 +1,1 @@
+ALTER TABLE ebay_listings ADD COLUMN IF NOT EXISTS ebay_category_name text;

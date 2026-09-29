@@ -1,0 +1,41 @@
+[functions.source-parts]
+verify_jwt = false
+
+[functions.vehicle-config]
+verify_jwt = false
+
+[functions.part-research]
+verify_jwt = false
+
+[functions.labor-times]
+verify_jwt = false
+
+[functions.suggest-parts]
+verify_jwt = false
+
+[functions.invoice-portal]
+verify_jwt = false
+
+[functions.process-payment]
+verify_jwt = false
+
+[functions.send-message]
+verify_jwt = false
+
+[functions.sms-webhook]
+verify_jwt = false
+
+[functions.ebay-api]
+verify_jwt = false
+
+[functions.repair-info]
+verify_jwt = false
+
+[functions.square-locations]
+verify_jwt = false
+
+[functions.paypal-test]
+verify_jwt = false
+
+[functions.customer-portal]
+verify_jwt = false

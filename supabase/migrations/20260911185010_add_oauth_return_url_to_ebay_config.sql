@@ -1,0 +1,1 @@
+ALTER TABLE ebay_config ADD COLUMN IF NOT EXISTS oauth_return_url text;
