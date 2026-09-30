@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>G10 Builder</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { background: #0b0f14; color: #e6edf3; font-family: system-ui, -apple-system, sans-serif; margin: 0; padding: 24px; max-width: 1100px; margin-inline: auto; }
+  h1 { font-size: 1.4rem; margin: 0 0 4px; }
+  .sub { color: #8b949e; font-size: .85rem; margin-bottom: 20px; }
+  .card { background: #11161d; border: 1px solid #232b36; border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  input[type=text], input[type=password], textarea { background: #0b0f14; border: 1px solid #2d3742; color: #e6edf3; border-radius: 8px; padding: 9px 12px; font-size: .9rem; width: 100%; }
+  textarea { min-height: 70px; resize: vertical; }
+  button { background: #1f6feb; color: #fff; border: 0; border-radius: 8px; padding: 9px 16px; font-size: .9rem; cursor: pointer; }
+  button:disabled { opacity: .45; cursor: default; }
+  button.danger { background: #b62324; }
+  button.ghost { background: #232b36; }
+  .cfg { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; }
+  .job { border: 1px solid #232b36; border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; cursor: pointer; }
+  .job:hover { border-color: #3b4756; }
+  .job.sel { border-color: #1f6feb; }
+  .badge { display: inline-block; font-size: .72rem; font-weight: 700; border-radius: 20px; padding: 3px 10px; text-transform: uppercase; letter-spacing: .04em; }
+  .st-running { background: #1f6feb33; color: #79b8ff; }
+  .st-awaiting_approval { background: #d2992233; color: #e3b341; }
+  .st-applying { background: #1f6feb33; color: #79b8ff; }
+  .st-applied, .st-done { background: #2ea04333; color: #56d364; }
+  .st-failed, .st-rolled_back { background: #f8514933; color: #ff7b72; }
+  .st-rejected { background: #8b949e33; color: #8b949e; }
+  pre { background: #0b0f14; border: 1px solid #232b36; border-radius: 8px; padding: 12px; overflow: auto; font-size: .78rem; line-height: 1.45; white-space: pre-wrap; word-break: break-word; max-height: 420px; }
+  .diff-add { color: #56d364; } .diff-del { color: #ff7b72; }
+  .meta { color: #8b949e; font-size: .78rem; }
+  .err { color: #ff7b72; font-size: .85rem; margin-top: 8px; }
+  .filehead { font-weight: 700; margin: 14px 0 6px; font-size: .9rem; }
+  #detail:empty { display: none; }
+</style>
+</head>
+<body>
+  <h1>G10 Builder</h1>
+  <div class="sub">Propose changes with the AI pipeline, review the exact diff, approve or reject. Nothing is applied without your approval.</div>
+
+  <div class="card">
+    <div class="cfg">
+      <input type="text" id="apiUrl" placeholder="API URL (default: same origin)">
+      <input type="password" id="token" placeholder="API token (BUILDER_API_TOKEN)">
+      <button class="ghost" id="saveCfg">Save</button>
+    </div>
+    <div class="err" id="authErr" style="display:none"></div>
+  </div>
+
+  <div class="card">
+    <textarea id="request" placeholder="What do you want to change? e.g. Change the dashboard heading to 'Fort Peck Auto'"></textarea>
+    <div class="row" style="margin-top:10px">
+      <button id="propose">Propose change</button>
+      <span class="meta">Runs the pipeline; the diff comes back here for approval.</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin:0 0 10px;font-size:.95rem">Jobs</h3>
+    <div id="jobs"></div>
+  </div>
+
+  <div class="card" id="detail"></div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const store = sessionStorage;
+
+function apiBase() {
+  const v = ($("apiUrl").value || "").trim();
+  return v ? v.replace(/\/$/, "") : location.origin;
+}
+function token() { return ($("token").value || "").trim(); }
+
+async function api(path, opts = {}) {
+  const res = await fetch(apiBase() + path, {
+    ...opts,
+    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token(), ...(opts.headers || {}) },
+  });
+  if (res.status === 401) {
+    $("authErr").style.display = "block";
+    $("authErr").textContent = "Unauthorized — check the API token.";
+    throw new Error("unauthorized");
+  }
+  $("authErr").style.display = "none";
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || ("HTTP " + res.status));
+  }
+  return res.json();
+}
+
+function esc(s) { return String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+function fmtDiff(diff) {
+  return esc(diff).split("\n").map(line => {
+    if (line.startsWith("+")) return '<span class="diff-add">' + line + "</span>";
+    if (line.startsWith("-")) return '<span class="diff-del">' + line + "</span>";
+    return line;
+  }).join("\n");
+}
+
+let selectedJob = null;
+
+async function refreshJobs() {
+  let data;
+  try { data = await api("/api/jobs"); }
+  catch { return; }
+  const box = $("jobs");
+  if (!data.jobs.length) { box.innerHTML = '<span class="meta">No jobs yet.</span>'; return; }
+  box.innerHTML = data.jobs.map(j => `
+    <div class="job ${j.id === selectedJob ? "sel" : ""}" data-id="${esc(j.id)}">
+      <span class="badge st-${esc(j.status)}">${esc(j.status.replace(/_/g, " "))}</span>
+      <strong style="margin-left:8px">${esc(j.request.slice(0, 80))}</strong>
+      <div class="meta">${esc(j.id)} · ${esc(j.createdAt)}${j.files ? " · " + j.files + " file(s)" : ""}</div>
+    </div>`).join("");
+  box.querySelectorAll(".job").forEach(el =>
+    el.addEventListener("click", () => { selectedJob = el.dataset.id; refreshDetail(); refreshJobs(); }));
+}
+
+async function refreshDetail() {
+  const box = $("detail");
+  if (!selectedJob) { box.innerHTML = ""; return; }
+  let data;
+  try { data = await api("/api/jobs/" + encodeURIComponent(selectedJob)); }
+  catch { return; }
+  const j = data.job;
+  let html = `
+    <div class="row" style="justify-content:space-between">
+      <div><span class="badge st-${esc(j.status)}">${esc(j.status.replace(/_/g, " "))}</span>
+      <strong style="margin-left:8px">${esc(j.request)}</strong></div>
+      <button class="ghost" id="closeDetail">Close</button>
+    </div>
+    <div class="meta" style="margin:8px 0">${esc(j.id)} · created ${esc(j.createdAt)} · updated ${esc(j.updatedAt)}</div>`;
+
+  if (j.proposal) {
+    if (j.proposal.summary) html += `<p>${esc(j.proposal.summary)}</p>`;
+    if (j.proposal.reviewSummary) html += `<p class="meta">Review: ${esc(j.proposal.reviewSummary)}</p>`;
+    for (const c of j.proposal.changes) {
+      html += `<div class="filehead">${esc(c.file)}</div><pre>${fmtDiff(c.diff || "")}</pre>`;
+    }
+  }
+  if (j.result && j.result.message) html += `<p><strong>Result:</strong> ${esc(j.result.message)}</p>`;
+  if (j.result && j.result.error) html += `<p class="err"><strong>Error:</strong> ${esc(j.result.error)}</p>`;
+  if (j.backupDir) html += `<p class="meta">Backup: ${esc(j.backupDir)}</p>`;
+
+  if (j.status === "awaiting_approval") {
+    html += `<div class="row" style="margin-top:12px">
+      <button id="approve">Approve, backup, apply &amp; build</button>
+      <button class="danger" id="reject">Reject</button>
+      <span class="meta">Approval backs up originals first and rolls back if the build fails.</span>
+    </div>`;
+  }
+  html += `<h4 style="margin:16px 0 6px">Logs</h4><pre>${esc((j.logs || []).join(""))}</pre>`;
+  box.innerHTML = html;
+
+  $("closeDetail").onclick = () => { selectedJob = null; refreshDetail(); refreshJobs(); };
+  const ap = $("approve"), rj = $("reject");
+  if (ap) ap.onclick = async () => {
+    if (!confirm("Approve this diff? Originals will be backed up, then applied and build-tested.")) return;
+    ap.disabled = true;
+    try { await api("/api/jobs/" + encodeURIComponent(selectedJob) + "/approve", { method: "POST" }); }
+    catch (e) { alert(e.message); }
+    refreshDetail(); refreshJobs();
+  };
+  if (rj) rj.onclick = async () => {
+    const reason = prompt("Reason for rejection (optional):", "") || "";
+    try { await api("/api/jobs/" + encodeURIComponent(selectedJob) + "/reject", { method: "POST", body: JSON.stringify({ reason }) }); }
+    catch (e) { alert(e.message); }
+    refreshDetail(); refreshJobs();
+  };
+}
+
+$("saveCfg").onclick = () => {
+  store.setItem("g10b_url", $("apiUrl").value.trim());
+  store.setItem("g10b_token", $("token").value.trim());
+  refreshJobs();
+};
+$("apiUrl").value = store.getItem("g10b_url") || "";
+$("token").value = store.getItem("g10b_token") || "";
+
+$("propose").onclick = async () => {
+  const request = $("request").value.trim();
+  if (!request) { alert("Describe the change first."); return; }
+  if (!token()) { alert("Enter the API token first."); return; }
+  $("propose").disabled = true;
+  try {
+    const data = await api("/api/jobs", { method: "POST", body: JSON.stringify({ request }) });
+    selectedJob = data.job.id;
+    $("request").value = "";
+  } catch (e) { alert(e.message); }
+  $("propose").disabled = false;
+  refreshJobs(); refreshDetail();
+};
+
+refreshJobs();
+setInterval(() => { refreshJobs(); if (selectedJob) refreshDetail(); }, 4000);
+</script>
+</body>
+</html>
