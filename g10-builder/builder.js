@@ -925,6 +925,8 @@ async function main() {
     "What do you want to change? "
   );
 
+  const fastLane = detectFastLane(request);
+
   try {
     console.log("\n[1] Manager selecting agents...");
 
