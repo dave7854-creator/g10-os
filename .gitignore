@@ -25,3 +25,6 @@ dist-ssr
 g10-builder/backups/
 .bolt/
 g10-builder/backups/
+
+# Build-generated runtime config (contains deploy-time secrets) — never commit
+public/runtime-config.js
