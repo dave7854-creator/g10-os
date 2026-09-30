@@ -3,12 +3,20 @@ import OpenAI from "openai";
 import fs from "fs";
 import path from "path";
 import readline from "readline";
-import { execSync } from "child_process";
+import {
+  PROJECT_ROOT,
+  validateChanges,
+  showDiffs,
+  createBackup,
+  applyChanges,
+  restoreBackup,
+  runBuild,
+  readFile,
+  normalize,
+} from "./safety.js";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-const PROJECT_ROOT = path.resolve("..");
-const BACKUP_ROOT = path.resolve("./backups");
 
 const ALLOWED = new Set([
   ".ts", ".tsx", ".js", ".jsx", ".json", ".sql", ".css", ".html"
@@ -122,9 +130,6 @@ const MAX_FILE_CHARS = 80000;
 const MAX_TOTAL_CHARS = 350000;
 const MAX_RETRIES = 2;
 
-function normalize(p) {
-  return p.replaceAll("\\", "/");
-}
 const KNOWLEDGE_FILE = path.join(
   path.dirname(new URL(import.meta.url).pathname),
   "g10-knowledge.json"
@@ -164,24 +169,6 @@ function scan(dir, results = []) {
   }
 
   return results;
-}
-
-function safePath(relativePath) {
-  const full = path.resolve(PROJECT_ROOT, relativePath);
-
-  if (!full.startsWith(PROJECT_ROOT + path.sep)) {
-    throw new Error(`Unsafe path blocked: ${relativePath}`);
-  }
-
-  return full;
-}
-
-function readFile(relativePath) {
-  const full = safePath(relativePath);
-
-  if (!fs.existsSync(full)) return null;
-
-  return fs.readFileSync(full, "utf8");
 }
 
 function parseJSON(text) {
@@ -680,217 +667,6 @@ If there is any material problem, return:
 
   return parseJSON(response.output_text);
 }
-function makeDiff(oldText, newText) {
-  const oldLines = oldText.split(/\r?\n/);
-  const newLines = newText.split(/\r?\n/);
-
-  let start = 0;
-
-  while (
-    start < oldLines.length &&
-    start < newLines.length &&
-    oldLines[start] === newLines[start]
-  ) {
-    start++;
-  }
-
-  let oldEnd = oldLines.length - 1;
-  let newEnd = newLines.length - 1;
-
-  while (
-    oldEnd >= start &&
-    newEnd >= start &&
-    oldLines[oldEnd] === newLines[newEnd]
-  ) {
-    oldEnd--;
-    newEnd--;
-  }
-
-  if (
-    start === oldLines.length &&
-    start === newLines.length
-  ) {
-    return "NO DIFFERENCE";
-  }
-
-  const before = Math.max(0, start - 3);
-  const oldAfter = Math.min(oldLines.length - 1, oldEnd + 3);
-
-  let output = "";
-
-  for (let i = before; i < start; i++) {
-    output += `  ${oldLines[i]}\n`;
-  }
-
-  for (let i = start; i <= oldEnd; i++) {
-    output += `- ${oldLines[i]}\n`;
-  }
-
-  for (let i = start; i <= newEnd; i++) {
-    output += `+ ${newLines[i]}\n`;
-  }
-
-  for (let i = oldEnd + 1; i <= oldAfter; i++) {
-    if (i >= 0 && i < oldLines.length) {
-      output += `  ${oldLines[i]}\n`;
-    }
-  }
-
-  return output;
-}
-
-function validateChanges(changes, allowedFiles) {
-  for (const change of changes) {
-    if (!allowedFiles.includes(change.file)) {
-      throw new Error(
-        `Blocked unauthorized change: ${change.file}`
-      );
-    }
-
-  if (
-  change.file.includes(".env") ||
-  change.file.endsWith("package-lock.json") ||
-  change.file === "g10-builder/g10-knowledge.json"
-) {
-  throw new Error(
-    `Protected file blocked: ${change.file}`
-  );
-}
-
-    if (typeof change.content !== "string") {
-      throw new Error(
-        `Invalid content: ${change.file}`
-      );
-    }
-if (
-  change.content.includes("Apply the following replacements") ||
-  change.content.includes("replacement instructions:") ||
-  change.content.includes("Replace the following code") ||
-  change.content.includes("replace:") ||
-  change.content.includes("with:")
-) {
-  throw new Error(
-    `Patch instructions blocked: ${change.file}`
-  );
-}
-    const original = readFile(change.file);
-
-    if (original === null) {
-      throw new Error(
-        `Missing source file: ${change.file}`
-      );
-    }
-
-    if (original === change.content) {
-      throw new Error(
-        `No actual change: ${change.file}`
-      );
-    }
-  }
-}
-
-function showDiffs(changes) {
-  console.log("\n====================================");
-  console.log("             EXACT DIFF");
-  console.log("====================================");
-
-  for (const change of changes) {
-    console.log(`\nFILE: ${change.file}`);
-    console.log("------------------------------------");
-
-    console.log(
-      makeDiff(
-        readFile(change.file),
-        change.content
-      )
-    );
-  }
-}
-
-function createBackup(changes) {
-  const stamp = new Date()
-    .toISOString()
-    .replaceAll(":", "-")
-    .replaceAll(".", "-");
-
-  const backupDir = path.join(
-    BACKUP_ROOT,
-    stamp
-  );
-
-  fs.mkdirSync(backupDir, {
-    recursive: true
-  });
-
-  for (const change of changes) {
-    const source = safePath(change.file);
-    const destination = path.join(
-      backupDir,
-      change.file
-    );
-
-    fs.mkdirSync(path.dirname(destination), {
-      recursive: true
-    });
-
-    fs.copyFileSync(source, destination);
-  }
-
-  return backupDir;
-}
-
-function applyChanges(changes) {
-  for (const change of changes) {
-    fs.writeFileSync(
-      safePath(change.file),
-      change.content,
-      "utf8"
-    );
-  }
-}
-
-function restoreBackup(changes, backupDir) {
-  for (const change of changes) {
-    const backup = path.join(
-      backupDir,
-      change.file
-    );
-
-    if (fs.existsSync(backup)) {
-      fs.copyFileSync(
-        backup,
-        safePath(change.file)
-      );
-    }
-  }
-}
-
-function runBuild() {
-  console.log("\nRunning build test...\n");
-
-  try {
-    execSync("npm run build", {
-      cwd: PROJECT_ROOT,
-      stdio: "inherit",
-      timeout: 120000,
-      windowsHide: true
-    });
-
-    console.log("\nBuild test passed.");
-  } catch (error) {
-    if (
-      error.killed ||
-      error.signal === "SIGTERM" ||
-      error.code === "ETIMEDOUT"
-    ) {
-      throw new Error(
-        "Build test timed out after 120 seconds."
-      );
-    }
-
-    throw error;
-  }
-}
 
 async function ask(question) {
   const rl = readline.createInterface({
@@ -904,6 +680,51 @@ async function ask(question) {
       resolve(answer.trim());
     });
   });
+}
+
+// Approval gate for proposed changes.
+//
+// Terminal mode (default): asks the human for YES on stdin, exactly as before.
+//
+// Web mode (BUILDER_APPROVAL_MODE=api, set by server.js when it runs a job):
+// writes the proposal to BUILDER_PROPOSAL_OUT and exits with code 42 so the
+// server can hold it for approval in the web UI. Nothing is applied here —
+// the server applies it later through jobs.js, which re-runs every safety
+// control (validate -> backup -> apply -> build -> rollback).
+const PROPOSAL_EXIT_CODE = 42;
+
+async function requestApproval(proposal, review) {
+  if (process.env.BUILDER_APPROVAL_MODE === "api") {
+    const outPath = process.env.BUILDER_PROPOSAL_OUT;
+
+    if (!outPath) {
+      throw new Error(
+        "BUILDER_APPROVAL_MODE=api requires BUILDER_PROPOSAL_OUT to be set."
+      );
+    }
+
+    const payload = {
+      version: 1,
+      summary: proposal.summary || "",
+      reviewSummary: (review && review.summary) || "",
+      changes: proposal.changes.map((change) => ({
+        file: change.file,
+        content: change.content,
+        original: readFile(change.file),
+      })),
+    };
+
+    fs.writeFileSync(outPath, JSON.stringify(payload), "utf8");
+
+    console.log("\nProposal written for web approval. Exiting.");
+    process.exit(PROPOSAL_EXIT_CODE);
+  }
+
+  const approval = await ask(
+    "\nType YES to backup, apply and build-test: "
+  );
+
+  return approval.toUpperCase() === "YES";
 }
 
 async function main() {
@@ -921,9 +742,14 @@ async function main() {
     )
   );
 
-  const request = await ask(
+  const request = process.env.BUILDER_JOB_REQUEST || await ask(
     "What do you want to change? "
   );
+
+  if (!request.trim()) {
+    console.log("No request given. Nothing changed.");
+    return;
+  }
 
   try {
     console.log("\n[1] Manager selecting agents...");
@@ -1150,6 +976,8 @@ async function main() {
     );
     let review;
 
+    const fastLane = detectFastLane(request);
+
 if (fastLane) {
   console.log("\n[4] FAST LANE — skipping AI Test/Review");
 
@@ -1245,11 +1073,9 @@ if (fastLane) {
 
     showDiffs(proposal.changes);
 
-    const approval = await ask(
-      "\nType YES to backup, apply and build-test: "
-    );
+    const approved = await requestApproval(proposal, review);
 
-    if (approval.toUpperCase() !== "YES") {
+    if (!approved) {
       console.log(
         "\nCancelled. Nothing changed."
       );
