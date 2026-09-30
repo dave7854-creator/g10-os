@@ -60,9 +60,9 @@ export function PinPad({
   };
 
   return (
-    <div className="fixed inset-0 bg-black flex flex-col items-center justify-center px-6 select-none">
+    <div className="fixed inset-0 bg-black flex flex-col items-center justify-start px-6 select-none pt-16">
       {/* Top section: icon + title + dots */}
-      <div className="flex-1 flex flex-col items-center justify-end pb-8 w-full max-w-sm">
+      <div className="flex flex-col items-center justify-start w-full max-w-sm">
         {icon && (
           <div className="w-16 h-16 rounded-full bg-red-500/15 flex items-center justify-center mb-5">
             {icon}
