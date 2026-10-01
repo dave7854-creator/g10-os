@@ -32,6 +32,7 @@ import {
 import { Card, Badge, Button, ProgressBar, formatCurrency } from '@/components/ui';
 import { EstimateExplainer, WhyEstimateButton, SourceTag } from '@/components/EstimateExplainer';
 import { MarketResearch } from '@/components/MarketResearch';
+import { OemLookupPanel } from '@/components/OemLookupPanel';
 import { ValuationSection } from '@/components/ValuationSection';
 import { demandColor, generateRevenueEstimate, compTierLabel, compTierBadgeColor } from '@/data';
 import { researchPart, fetchSoldComps, vehicleToResearchConfig } from '@/shop/researchService';
@@ -448,6 +449,7 @@ function PartResearchPanel({ part, vehicle, store }: { part: DismantlePart; vehi
   const [confirmed, setConfirmed] = useState(false);
   const [showOtherOptions, setShowOtherOptions] = useState(false);
   const [autoDebugInfo, setAutoDebugInfo] = useState<string>('');
+  const [showOemLookup, setShowOemLookup] = useState(false);
 
   const handleConfirmCandidate = (candidateNumber: string) => {
     setConfirmed(true);
@@ -677,7 +679,25 @@ function PartResearchPanel({ part, vehicle, store }: { part: DismantlePart; vehi
             placeholder="e.g., 55277414AF"
             className="flex-1 px-3 py-2 bg-slate-900/60 border border-slate-700/50 rounded-lg text-sm text-white font-mono placeholder:text-slate-600 focus:outline-none focus:border-red-500/50"
           />
+          <button
+            onClick={() => setShowOemLookup(!showOemLookup)}
+            disabled={!manualNumber.trim()}
+            className="px-3 py-2 text-xs font-semibold text-slate-300 bg-slate-700/60 hover:bg-slate-700 disabled:opacity-40 rounded-lg shrink-0"
+            title="Identify this part number first (catalog → eBay → web)"
+          >
+            {showOemLookup ? 'Hide ID' : 'Identify'}
+          </button>
         </div>
+        {showOemLookup && (
+          <OemLookupPanel
+            key={manualNumber.trim()}
+            initialNumber={manualNumber.trim()}
+            onUseNumber={(n) => {
+              setManualNumber(n);
+              setShowOemLookup(false);
+            }}
+          />
+        )}
       </div>
 
       <Button
