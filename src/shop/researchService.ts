@@ -1,4 +1,4 @@
-import type { Vehicle, PartResearchResult, SoldCompResponse, VehicleConfigOptions } from '@/types';
+import type { Vehicle, PartResearchResult, SoldCompResponse, VehicleConfigOptions, OemLookupRequest, OemLookupResult } from '@/types';
 
 function edgeUrl(slug: string): string {
   const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
@@ -64,6 +64,14 @@ export interface PartResearchPayload {
 
 export async function researchPart(payload: PartResearchPayload): Promise<PartResearchResult> {
   return callEdge('part-research', payload);
+}
+
+/**
+ * Identify a part from its OEM/MPN number (reverse lookup).
+ * Runs server-side: catalog sources first, then eBay Browse, then web fallback.
+ */
+export async function lookupOemNumber(payload: OemLookupRequest): Promise<OemLookupResult> {
+  return callEdge('oem-lookup', payload);
 }
 
 export interface SoldCompPayload {
