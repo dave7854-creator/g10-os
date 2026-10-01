@@ -789,7 +789,7 @@ async function main() {
     const specialistFindings = [];
 
     const specialists = (manager.agents || []).filter(agent =>
-      ["supabase", "frontend", "debugging"].includes(agent)
+      ["investigator", "supabase", "frontend", "debugging", "codeModification"].includes(agent)
     );
 
     for (const agentKey of specialists) {
