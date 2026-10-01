@@ -39,3 +39,6 @@ verify_jwt = false
 
 [functions.customer-portal]
 verify_jwt = false
+
+[functions.oem-lookup]
+verify_jwt = false
