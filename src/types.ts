@@ -288,51 +288,6 @@ export interface PartResearchResult {
   debugSummary?: OemDebugSummary;
 }
 
-export interface OemLookupRequest {
-  oemNumber: string;
-  year?: number;
-  make?: string;
-  model?: string;
-  vin?: string;
-  description?: string;
-}
-
-export interface OemEvidence {
-  fact: string;
-  value: string;
-  sourceName: string;
-  sourceUrl: string;
-  snippet: string;
-}
-
-export interface OemLookupOption {
-  partName: string;
-  partType: string;
-  applications: string[];
-  supportCount: number;
-  sources: string[];
-}
-
-export interface OemLookupResult {
-  identified: boolean;
-  manufacturer: string;
-  manufacturerCode: string | null;
-  oemNumber: string;
-  partName: string;
-  partType: string;
-  supersededNumbers: string[];
-  supersededBy: string | null;
-  hollanderNumber: string | null;
-  interchangeNumbers: string[];
-  applications: string[];
-  confidence: 'high' | 'medium' | 'low';
-  confidenceReason: string;
-  evidence: OemEvidence[];
-  options: OemLookupOption[];
-  degraded: string[];
-  notes: string;
-}
-
 export interface SoldCompResult {
   price: number;
   title: string;
