@@ -539,8 +539,10 @@
 <script type="module">
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.4';
 
-const SUPABASE_URL = 'https://mvctjwvpeamdbtsearmb.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im12Y3Rqd3ZwZWFtZGJ0c2Vhcm1iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0NjUxNTksImV4cCI6MjEwNDA0MTE1OX0.fKbFSrnqIYm1SHHYu_cngwOkg7sVlaKezQsQI1ph9JU';
+// Deployment must inject the real public Supabase URL and anon key at runtime.
+// This static file is not processed by Vite, so import.meta.env is unavailable here.
+const SUPABASE_URL = 'https://placeholder.supabase.co';
+const SUPABASE_ANON_KEY = 'placeholder-anon-key';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
