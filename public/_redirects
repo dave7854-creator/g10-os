@@ -1,6 +1,9 @@
 /  /public-site.html  200
+/public-site  /public-site.html  200
+/public-site/*  /public-site.html  200
 /pay/invoice/*  /pay.html  200
 /privacy  /privacy.html  200
 /find-a-part  /find-a-part.html  200
+/find-a-part/*  /find-a-part.html  200
 /app/*  /app.html  200
 /auth-callback  /auth-callback.html  200
