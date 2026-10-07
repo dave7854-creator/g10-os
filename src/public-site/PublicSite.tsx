@@ -16,31 +16,17 @@ export function PublicSite() {
   const [productItemId, setProductItemId] = useState<string | null>(null);
   const [productCachedItem, setProductCachedItem] = useState<EbayItem | null>(null);
 
-  // Keep the app in sync with the URL hash, including direct links,
-  // browser back/forward, and links such as /public-site#find-a-part.
+  // Sync with URL hash for basic routing
   useEffect(() => {
-    const syncFromHash = () => {
-      const hash = window.location.hash.slice(1);
-
-      if (!hash) {
-        setPage('home');
-        setProductItemId(null);
-        return;
-      }
-
-      if (hash.startsWith('product/')) {
-        setProductItemId(hash.slice('product/'.length));
-        setPage('product');
-      } else if (hash === 'portal' || hash.startsWith('portal/') || hash.startsWith('portal?')) {
-        setPage('portal');
-      } else {
-        setPage(hash as PageId);
-      }
-    };
-
-    syncFromHash();
-    window.addEventListener('hashchange', syncFromHash);
-    return () => window.removeEventListener('hashchange', syncFromHash);
+    const hash = window.location.hash.slice(1);
+    if (hash.startsWith('product/')) {
+      setProductItemId(hash.slice('product/'.length));
+      setPage('product');
+    } else if (hash === 'portal' || hash.startsWith('portal/') || hash.startsWith('portal?')) {
+      setPage('portal');
+    } else if (hash) {
+      setPage(hash as PageId);
+    }
   }, []);
 
   const navigate = (newPage: PageId) => {
