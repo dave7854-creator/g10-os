@@ -103,7 +103,6 @@ export function PublicLayout({ currentPage, onNavigate, children }: LayoutProps)
               <h4>Services</h4>
               <a onClick={() => navigate('repair')}>Auto Repair</a>
               <a onClick={() => navigate('towing')}>Towing</a>
-              <a onClick={() => navigate('alignment')}>Alignments</a>
             </div>
 
             <div className="fp-footer-col">
