@@ -109,7 +109,6 @@ export function PublicLayout({ currentPage, onNavigate, children }: LayoutProps)
             <div className="fp-footer-col">
               <h4>Parts</h4>
               <a onClick={() => navigate('parts')}>Parts & eBay Store</a>
-              <a onClick={() => navigate('find-a-part')}>Find a Part</a>
               <a href={BUSINESS.ebayStoreUrl} target="_blank" rel="noopener">eBay Store</a>
             </div>
 
