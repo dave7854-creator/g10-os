@@ -33,7 +33,7 @@ export function HomePage({ onNavigate, onViewProduct }: HomeProps) {
             Wolf Point, Montana
           </div>
           <h1>Fort Peck Auto</h1>
-          <p className="fp-hero-tagline">Auto Repair • Towing • Alignments • Used Auto Parts</p>
+          <p className="fp-hero-tagline">Auto Repair • Towing • Used Auto Parts</p>
           <p className="fp-hero-location">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
             {BUSINESS.location}
@@ -61,7 +61,7 @@ export function HomePage({ onNavigate, onViewProduct }: HomeProps) {
         <div className="fp-section-header">
           <span className="fp-eyebrow">Our Services</span>
           <h2>Full-Service Auto Shop</h2>
-          <p>Professional automotive repair, towing, wheel alignments, and quality used OEM parts — all in one place.</p>
+          <p>Professional automotive repair including wheel alignments, towing, and quality used OEM parts — all in one place.</p>
         </div>
         <div className="fp-services-grid">
           <div className="fp-service-card">
@@ -69,7 +69,7 @@ export function HomePage({ onNavigate, onViewProduct }: HomeProps) {
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
             </div>
             <h3>Auto Repair</h3>
-            <p>Professional automotive repair, diagnostics and maintenance.</p>
+            <p>Professional automotive repair, diagnostics, maintenance, and wheel alignments.</p>
             <div className="fp-service-actions">
               <button className="fp-btn fp-btn-primary fp-btn-sm" onClick={() => onNavigate('repair')}>Request Service</button>
             </div>
@@ -83,19 +83,6 @@ export function HomePage({ onNavigate, onViewProduct }: HomeProps) {
             <p>Professional towing and vehicle transport.</p>
             <div className="fp-service-actions">
               <a className="fp-btn fp-btn-accent fp-btn-sm" href={BUSINESS.phoneHref}>Call for Towing</a>
-            </div>
-          </div>
-
-          <div className="fp-service-card">
-            <div className="fp-service-icon green">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1"/></svg>
-            </div>
-            <div className="fp-service-sub">Now Offering</div>
-            <h3>Wheel Alignments</h3>
-            <p>Professional wheel alignment service using our Hunter system.</p>
-            <div className="fp-service-equip">GEOLINER 770</div>
-            <div className="fp-service-actions">
-              <button className="fp-btn fp-btn-primary fp-btn-sm" onClick={() => onNavigate('alignment')}>Schedule Alignment</button>
             </div>
           </div>
 
