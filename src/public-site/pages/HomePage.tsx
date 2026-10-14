@@ -107,7 +107,7 @@ export function HomePage({ onNavigate, onViewProduct }: HomeProps) {
             <p>Quality used OEM automotive parts with nationwide shipping.</p>
             <div className="fp-service-actions">
               <button className="fp-btn fp-btn-primary fp-btn-sm" onClick={() => onNavigate('parts')}>Shop Parts</button>
-              <button className="fp-btn fp-btn-outline fp-btn-sm" onClick={() => onNavigate('find-a-part')}>Find a Part</button>
+              <button className="fp-btn fp-btn-outline fp-btn-sm" onClick={() => onNavigate('home')}>Find a Part</button>
             </div>
           </div>
         </div>
@@ -138,7 +138,7 @@ export function HomePage({ onNavigate, onViewProduct }: HomeProps) {
             </div>
             <div style={{ textAlign: 'center' }}>
               <button className="fp-btn fp-btn-primary" onClick={() => onNavigate('parts')}>View All Parts</button>
-              <button className="fp-btn fp-btn-outline" style={{ marginLeft: 12 }} onClick={() => onNavigate('find-a-part')}>Find a Part</button>
+              <button className="fp-btn fp-btn-outline" style={{ marginLeft: 12 }} onClick={() => onNavigate('home')}>Find a Part</button>
             </div>
           </>
         )}
