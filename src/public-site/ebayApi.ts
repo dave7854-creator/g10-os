@@ -1,7 +1,7 @@
 import { BUSINESS } from './types';
 
-const SUPABASE_URL = 'https://mvctjwvpeamdbtsearmb.supabase.co';
-const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im12Y3Rqd3ZwZWFtZGJ0c2Vhcm1iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0NjUxNTksImV4cCI6MjEwNDA0MTE1OX0.fKbFSrnqIYm1SHHYu_cngwOkg7sVlaKezQsQI1ph9JU';
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL ?? 'https://placeholder.supabase.co';
+const ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY ?? 'placeholder-anon-key';
 const FN_BASE = `${SUPABASE_URL}/functions/v1/ebay-api`;
 
 export interface EbayItem {

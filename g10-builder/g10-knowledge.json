@@ -62,6 +62,10 @@
     {
       "path": "supabase/functions/customer-portal/index.ts",
       "purpose": "Customer portal Supabase Edge Function including customer account provisioning and portal operations."
+    },
+    {
+      "path": "supabase/migrations/20260916223155_20260916230000_add_portal_status_and_manager_functions.sql.sql",
+      "purpose": "Adds customer portal status, setup state, and manager-side portal account functions. Important when diagnosing customer authentication and portal provisioning."
     }
   ],
   "decisions": [
@@ -80,8 +84,4 @@
     "G10 Builder should favor targeted file retrieval to minimize API token usage."
   ],
   "agentFindings": []
-  {
-  "path": "supabase/migrations/20260916223155_20260916230000_add_portal_status_and_manager_functions.sql.sql",
-  "purpose": "Adds customer portal status, setup state, and manager-side portal account functions. Important when diagnosing customer authentication and portal provisioning."
-}
 }

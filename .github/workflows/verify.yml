@@ -1,0 +1,38 @@
+name: Verify G10 OS
+
+on:
+  push:
+    branches:
+      - fix/builder-foundation
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check Builder syntax
+        run: node --check g10-builder/builder.js
+
+      - name: Validate Builder knowledge JSON
+        run: node -e "JSON.parse(require('fs').readFileSync('g10-builder/g10-knowledge.json','utf8')); console.log('knowledge json ok')"
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
