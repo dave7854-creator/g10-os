@@ -20,6 +20,10 @@ interface TimeClock {
   employee_id: string;
   clock_in: string;
   clock_out: string | null;
+  clock_in_lat: number | null;
+  clock_in_lng: number | null;
+  clock_out_lat: number | null;
+  clock_out_lng: number | null;
 }
 
 interface WorkActivity {
@@ -176,6 +180,18 @@ export function ClockInScreen({ onNavigate, initialEmployee, onLock }: { onNavig
     setPinError('');
   };
 
+  const getLocation = (): Promise<GeolocationCoordinates> => new Promise((resolve, reject) => {
+    if (!navigator.geolocation || !window.isSecureContext) {
+      reject(new Error('Location requires HTTPS and a GPS-enabled browser.'));
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      position => resolve(position.coords),
+      () => reject(new Error('Allow precise location access in your browser settings to clock in.')),
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+    );
+  });
+
   const handleClockToggle = async () => {
     if (!loggedInEmp) return;
     setActionLoading(true);
@@ -215,6 +231,8 @@ export function ClockInScreen({ onNavigate, initialEmployee, onLock }: { onNavig
           setActionLoading(false);
           return;
         }
+        // Require a fresh GPS fix before creating a paid shift.
+        const location = await getLocation();
         // No open shift — safe to create one
         const { data, error: insertError } = await supabase
           .from('time_clocks')
@@ -239,8 +257,8 @@ export function ClockInScreen({ onNavigate, initialEmployee, onLock }: { onNavig
         await fetchDashboardData(loggedInEmp.id);
       }
       setTimeout(() => setSuccessMsg(''), 3000);
-    } catch {
-      setPinError('Something went wrong. Try again.');
+    } catch (error) {
+      setPinError(error instanceof Error ? error.message : 'Something went wrong. Try again.');
       await fetchDashboardData(loggedInEmp.id);
     } finally {
       setActionLoading(false);
