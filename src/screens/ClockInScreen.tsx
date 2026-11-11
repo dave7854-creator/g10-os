@@ -196,8 +196,8 @@ export function ClockInScreen({ onNavigate, initialEmployee, onLock }: { onNavig
     if (!loggedInEmp) return;
     setActionLoading(true);
     try {
-      const gps = await captureClockLocation();
       if (currentClock) {
+        const gps = await captureClockLocation();
         // CLOCK OUT — update the existing open record, don't create a new one
         const { error: clockOutError } = await supabase
           .from('time_clocks')
@@ -241,7 +241,7 @@ export function ClockInScreen({ onNavigate, initialEmployee, onLock }: { onNavig
             clock_in_latitude: location.latitude,
             clock_in_longitude: location.longitude,
             clock_in_accuracy_m: location.accuracy,
-            clock_in_location_status: 'recorded',
+            clock_in_location_status: 'captured',
           })
           .select('*')
           .single();
