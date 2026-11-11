@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { Card, Badge, Button } from '@/components/ui';
 import { supabase } from '@/supabaseClient';
+import { clockLocationUrl } from '@/utils/clockLocation';
 import { restoreSession } from '@/auth/sessionService';
 import type { Screen } from '@/types';
 
@@ -21,6 +22,14 @@ interface TimeClock {
   clock_out: string | null;
   edited_by: string | null;
   edited_at: string | null;
+  clock_in_latitude: number | null;
+  clock_in_longitude: number | null;
+  clock_in_accuracy_m: number | null;
+  clock_in_location_status: string | null;
+  clock_out_latitude: number | null;
+  clock_out_longitude: number | null;
+  clock_out_accuracy_m: number | null;
+  clock_out_location_status: string | null;
 }
 
 interface AuditEntry {
@@ -858,6 +867,18 @@ export function TimesheetScreen({ onNavigate }: { onNavigate: (s: Screen) => voi
                                 <span className="text-xs text-white whitespace-nowrap">{formatTime(tc.clock_in)}</span>
                                 <span className="text-slate-600 text-xs">→</span>
                                 <span className="text-xs text-white whitespace-nowrap">{tc.clock_out ? formatTime(tc.clock_out) : 'Active'}</span>
+                                <span className="text-[10px] text-slate-400">
+                                  {tc.clock_in_latitude != null && tc.clock_in_longitude != null ? (
+                                    <a className="text-sky-400 underline" href={clockLocationUrl(tc.clock_in_latitude, tc.clock_in_longitude)} target="_blank" rel="noopener noreferrer" title={tc.clock_in_accuracy_m != null ? `Accuracy ±${Math.round(tc.clock_in_accuracy_m)}m` : 'Clock-in location'}>In GPS</a>
+                                  ) : <span title={tc.clock_in_location_status ?? 'Not recorded'}>In GPS unavailable</span>}
+                                </span>
+                                {tc.clock_out && (
+                                  <span className="text-[10px] text-slate-400">
+                                    {tc.clock_out_latitude != null && tc.clock_out_longitude != null ? (
+                                      <a className="text-sky-400 underline" href={clockLocationUrl(tc.clock_out_latitude, tc.clock_out_longitude)} target="_blank" rel="noopener noreferrer" title={tc.clock_out_accuracy_m != null ? `Accuracy ±${Math.round(tc.clock_out_accuracy_m)}m` : 'Clock-out location'}>Out GPS</a>
+                                    ) : <span title={tc.clock_out_location_status ?? 'Not recorded'}>Out GPS unavailable</span>}
+                                  </span>
+                                )}
                               </div>
                               <div className="flex items-center gap-2 flex-shrink-0">
                                 <Badge color={tc.clock_out ? 'slate' : 'green'}>{formatHours(hrs)}</Badge>
