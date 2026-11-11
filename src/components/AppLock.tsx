@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Lock, Loader2, AlertCircle, UserCog } from 'lucide-react';
 import { supabase } from '@/supabaseClient';
+import { recordEmployeeLocation } from '@/utils/employeeLocation';
 import { PinPad } from '@/components/PinPad';
 import { saveSession, type SessionUser } from '@/auth/sessionService';
 
@@ -50,6 +51,7 @@ export function AppLock({ onUnlock }: { onUnlock: (emp: AppEmployee) => void }) 
       };
       saveSession(sessionUser);
       onUnlock(match);
+      void recordEmployeeLocation(match.id, 'login').catch(console.error);
     } else {
       setError('Incorrect passcode');
     }
@@ -94,6 +96,7 @@ export function AppLock({ onUnlock }: { onUnlock: (emp: AppEmployee) => void }) 
       };
       saveSession(sessionUser);
       onUnlock(emp);
+      void recordEmployeeLocation(emp.id, 'login').catch(console.error);
     }
   };
 
