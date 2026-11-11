@@ -203,7 +203,7 @@ export function ClockInScreen({ onNavigate, initialEmployee, onLock }: { onNavig
           .from('time_clocks')
           .update({
             clock_out: new Date().toISOString(),
-            clock_out_latitudeitude: gps.location?.latitude ?? null,
+            clock_out_latitude: gps.location?.latitude ?? null,
             clock_out_longitude: gps.location?.longitude ?? null,
             clock_out_accuracy_m: gps.location?.accuracy ?? null,
             clock_out_location_status: gps.status,
@@ -238,10 +238,10 @@ export function ClockInScreen({ onNavigate, initialEmployee, onLock }: { onNavig
           .from('time_clocks')
           .insert({
             employee_id: loggedInEmp.id,
-            clock_in_latitudeitude: gps.location?.latitude ?? null,
-            clock_in_longitude: gps.location?.longitude ?? null,
-            clock_in_accuracy_m: gps.location?.accuracy ?? null,
-            clock_in_location_status: gps.status,
+            clock_in_latitude: location.latitude,
+            clock_in_longitude: location.longitude,
+            clock_in_accuracy_m: location.accuracy,
+            clock_in_location_status: 'recorded',
           })
           .select('*')
           .single();
