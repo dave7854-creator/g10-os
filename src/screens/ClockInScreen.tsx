@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Clock, LogIn, LogOut, User, Loader2, CheckCircle2, AlertCircle, Plus, Trash2, Edit3, ClipboardList, Activity, X } from 'lucide-react';
 import { Card, Button, Badge } from '@/components/ui';
 import { supabase } from '@/supabaseClient';
+import { captureClockLocation } from '@/utils/clockLocation';
 import { toTitleCase } from '@/utils/textCase';
 import type { Screen } from '@/types';
 
@@ -179,12 +180,20 @@ export function ClockInScreen({ onNavigate, initialEmployee, onLock }: { onNavig
     if (!loggedInEmp) return;
     setActionLoading(true);
     try {
+      const gps = await captureClockLocation();
       if (currentClock) {
         // CLOCK OUT — update the existing open record, don't create a new one
-        await supabase
+        const { error: clockOutError } = await supabase
           .from('time_clocks')
-          .update({ clock_out: new Date().toISOString() })
+          .update({
+            clock_out: new Date().toISOString(),
+            clock_out_latitude: gps.location?.latitude ?? null,
+            clock_out_longitude: gps.location?.longitude ?? null,
+            clock_out_accuracy_m: gps.location?.accuracy ?? null,
+            clock_out_location_status: gps.status,
+          })
           .eq('id', currentClock.id);
+        if (clockOutError) throw clockOutError;
         setSuccessMsg(`Clocked out at ${formatTime(new Date().toISOString())}`);
         setCurrentClock(null);
         await fetchDashboardData(loggedInEmp.id);
@@ -209,7 +218,13 @@ export function ClockInScreen({ onNavigate, initialEmployee, onLock }: { onNavig
         // No open shift — safe to create one
         const { data, error: insertError } = await supabase
           .from('time_clocks')
-          .insert({ employee_id: loggedInEmp.id })
+          .insert({
+            employee_id: loggedInEmp.id,
+            clock_in_latitude: gps.location?.latitude ?? null,
+            clock_in_longitude: gps.location?.longitude ?? null,
+            clock_in_accuracy_m: gps.location?.accuracy ?? null,
+            clock_in_location_status: gps.status,
+          })
           .select('*')
           .single();
         if (insertError) {
