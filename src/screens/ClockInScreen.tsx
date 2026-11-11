@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Clock, LogIn, LogOut, User, Loader2, CheckCircle2, AlertCircle, Plus, Trash2, Edit3, ClipboardList, Activity, X } from 'lucide-react';
 import { Card, Button, Badge } from '@/components/ui';
 import { supabase } from '@/supabaseClient';
+import { recordEmployeeLocation } from '@/utils/employeeLocation';
 import { toTitleCase } from '@/utils/textCase';
 import type { Screen } from '@/types';
 
@@ -185,6 +186,7 @@ export function ClockInScreen({ onNavigate, initialEmployee, onLock }: { onNavig
           .from('time_clocks')
           .update({ clock_out: new Date().toISOString() })
           .eq('id', currentClock.id);
+        void recordEmployeeLocation(loggedInEmp.id, 'clock_out', currentClock.id).catch(console.error);
         setSuccessMsg(`Clocked out at ${formatTime(new Date().toISOString())}`);
         setCurrentClock(null);
         await fetchDashboardData(loggedInEmp.id);
@@ -220,6 +222,7 @@ export function ClockInScreen({ onNavigate, initialEmployee, onLock }: { onNavig
           return;
         }
         setCurrentClock(data as TimeClock);
+        void recordEmployeeLocation(loggedInEmp.id, 'clock_in', (data as TimeClock).id).catch(console.error);
         setSuccessMsg(`Clocked in at ${formatTime(new Date().toISOString())}`);
         await fetchDashboardData(loggedInEmp.id);
       }
