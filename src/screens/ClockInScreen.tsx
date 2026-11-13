@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Clock, LogIn, LogOut, User, Loader2, CheckCircle2, AlertCircle, Plus, Trash2, Edit3, ClipboardList, Activity, X } from 'lucide-react';
 import { Card, Button, Badge } from '@/components/ui';
 import { supabase } from '@/supabaseClient';
+import { captureClockLocation } from '@/utils/clockLocation';
 import { toTitleCase } from '@/utils/textCase';
 import type { Screen } from '@/types';
 
@@ -19,6 +20,10 @@ interface TimeClock {
   employee_id: string;
   clock_in: string;
   clock_out: string | null;
+  clock_in_latitude: number | null;
+  clock_in_longitude: number | null;
+  clock_out_latitude: number | null;
+  clock_out_longitude: number | null;
 }
 
 interface WorkActivity {
@@ -175,16 +180,36 @@ export function ClockInScreen({ onNavigate, initialEmployee, onLock }: { onNavig
     setPinError('');
   };
 
+  const getLocation = (): Promise<GeolocationCoordinates> => new Promise((resolve, reject) => {
+    if (!navigator.geolocation || !window.isSecureContext) {
+      reject(new Error('Location requires HTTPS and a GPS-enabled browser.'));
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      position => resolve(position.coords),
+      () => reject(new Error('Allow precise location access in your browser settings to clock in.')),
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+    );
+  });
+
   const handleClockToggle = async () => {
     if (!loggedInEmp) return;
     setActionLoading(true);
     try {
       if (currentClock) {
+        const gps = await captureClockLocation();
         // CLOCK OUT — update the existing open record, don't create a new one
-        await supabase
+        const { error: clockOutError } = await supabase
           .from('time_clocks')
-          .update({ clock_out: new Date().toISOString() })
+          .update({
+            clock_out: new Date().toISOString(),
+            clock_out_latitude: gps.location?.latitude ?? null,
+            clock_out_longitude: gps.location?.longitude ?? null,
+            clock_out_accuracy_m: gps.location?.accuracy ?? null,
+            clock_out_location_status: gps.status,
+          })
           .eq('id', currentClock.id);
+        if (clockOutError) throw clockOutError;
         setSuccessMsg(`Clocked out at ${formatTime(new Date().toISOString())}`);
         setCurrentClock(null);
         await fetchDashboardData(loggedInEmp.id);
@@ -206,10 +231,18 @@ export function ClockInScreen({ onNavigate, initialEmployee, onLock }: { onNavig
           setActionLoading(false);
           return;
         }
+        // Require a fresh GPS fix before creating a paid shift.
+        const location = await getLocation();
         // No open shift — safe to create one
         const { data, error: insertError } = await supabase
           .from('time_clocks')
-          .insert({ employee_id: loggedInEmp.id })
+          .insert({
+            employee_id: loggedInEmp.id,
+            clock_in_latitude: location.latitude,
+            clock_in_longitude: location.longitude,
+            clock_in_accuracy_m: location.accuracy,
+            clock_in_location_status: 'captured',
+          })
           .select('*')
           .single();
         if (insertError) {
@@ -224,8 +257,8 @@ export function ClockInScreen({ onNavigate, initialEmployee, onLock }: { onNavig
         await fetchDashboardData(loggedInEmp.id);
       }
       setTimeout(() => setSuccessMsg(''), 3000);
-    } catch {
-      setPinError('Something went wrong. Try again.');
+    } catch (error) {
+      setPinError(error instanceof Error ? error.message : 'Something went wrong. Try again.');
       await fetchDashboardData(loggedInEmp.id);
     } finally {
       setActionLoading(false);
